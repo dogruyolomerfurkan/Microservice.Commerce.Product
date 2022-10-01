@@ -14,6 +14,13 @@ public class ProductController : ControllerBase
         _productRepository = productRepository;
     }
 
+    [HttpGet]
+    public async Task<IEnumerable<ProductDto>> GetAsync()
+    {
+        var products = (await _productRepository.GetListAsync()).Select(product => product.AdaptDto());
+        return products;
+    }
+
     [HttpGet("{id}")]
     public async Task<ActionResult<ProductDto>> GetByIdAsync(Guid id)
     {
@@ -38,5 +45,31 @@ public class ProductController : ControllerBase
         await _productRepository.CreateAsync(newProduct);
 
         return CreatedAtAction(nameof(GetByIdAsync), new { id = newProduct.Id }, newProduct);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> PutAsync(Guid id, UpdateProductDto updateProductDto)
+    {
+        var currentProduct = await _productRepository.GetAsync(id);
+        if (currentProduct is null) return NotFound();
+
+        currentProduct.Name = updateProductDto.Name;
+        currentProduct.Description = updateProductDto.Description;
+        currentProduct.Price = updateProductDto.Price;
+
+        await _productRepository.UpdateAsync(currentProduct);
+
+        return Ok(currentProduct);
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteAsync(Guid id)
+    {
+        var currentProduct = await _productRepository.GetAsync(id);
+        if (currentProduct is null) return NotFound();
+
+        await _productRepository.RemoveAsync(id);
+
+        return NoContent();
     }
 }
