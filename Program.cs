@@ -1,9 +1,12 @@
+using Commerce.Core.MassTransit;
 using Commerce.Core.MongoDB;
 using Commerce.Product.Service.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddMongoDB().AddMongoDBRepository<Product>("Products");
+builder.Services.AddMongoDB()
+                .AddMongoDBRepository<Product>("Products")
+                .AddMassTransitWithRabbitMq();
 
 builder.Services.AddControllers(options => { options.SuppressAsyncSuffixInActionNames = false; });
 

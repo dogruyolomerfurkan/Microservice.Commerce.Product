@@ -1,4 +1,6 @@
 using Commerce.Core;
+using Commerce.Core.Contracts;
+using MassTransit;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Commerce.Product.Service.Controllers;
@@ -9,9 +11,13 @@ public class ProductController : ControllerBase
 {
     private readonly IRepository<Entities.Product> _productRepository;
 
-    public ProductController(IRepository<Entities.Product> productRepository)
+    //MassTransit publisher. Send this request to the consumers.
+    private readonly IPublishEndpoint _publishEndpoint;
+
+    public ProductController(IRepository<Entities.Product> productRepository, IPublishEndpoint publishEndpoint)
     {
         _productRepository = productRepository;
+        _publishEndpoint = publishEndpoint;
     }
 
     [HttpGet]
@@ -44,6 +50,9 @@ public class ProductController : ControllerBase
 
         await _productRepository.CreateAsync(newProduct);
 
+        //MassTransit publish
+        await _publishEndpoint.Publish(new ProductCreated(newProduct.Id, newProduct.Name, newProduct.Description));
+
         return CreatedAtAction(nameof(GetByIdAsync), new { id = newProduct.Id }, newProduct);
     }
 
@@ -59,6 +68,9 @@ public class ProductController : ControllerBase
 
         await _productRepository.UpdateAsync(currentProduct);
 
+        //MassTransit publish
+        await _publishEndpoint.Publish(new ProductUpdated(currentProduct.Id, currentProduct.Name, currentProduct.Description));
+
         return Ok(currentProduct);
     }
 
@@ -69,6 +81,9 @@ public class ProductController : ControllerBase
         if (currentProduct is null) return NotFound();
 
         await _productRepository.RemoveAsync(id);
+
+        //MassTransit publish
+        await _publishEndpoint.Publish(new ProductDeleted(id));
 
         return NoContent();
     }
