@@ -1,6 +1,7 @@
 using Commerce.Core.MassTransit;
 using Commerce.Core.MongoDB;
 using Commerce.Product.Service.Entities;
+using MassTransit;
 
 var builder = WebApplication.CreateBuilder(args);
 
